@@ -1,0 +1,53 @@
+
+name: Build ONIX AI APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'onix_ai.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project ZIP
+        run: |
+          mkdir source
+          unzip -q onix_ai.zip -d source
+          PROJECT_DIR=$(find source -name pubspec.yaml -printf '%h\n' | head -n 1)
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "pubspec.yaml not found"
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build APK
+        run: |
+          cd "$PROJECT_DIR"
+          chmod +x setup.sh
+          ./setup.sh
+          flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ONIX-AI-APK
+          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-debug.apk
+          
