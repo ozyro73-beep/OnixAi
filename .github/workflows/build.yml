@@ -27,6 +27,12 @@ jobs:
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
+      - name: Fix Gemini Model
+        run: |
+          grep -RIl 'gemini-2.5-flash' "$PROJECT_DIR/lib" | xargs -r sed -i 's/gemini-2.5-flash/gemini-3.8-flash/g'
+          echo "Checking Gemini model:"
+          grep -RIn 'gemini-' "$PROJECT_DIR/lib" || true
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
