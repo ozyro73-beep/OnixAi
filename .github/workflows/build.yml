@@ -1,11 +1,10 @@
-
 name: Build ONIX AI APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'onix_ai.zip'
+      - '*.zip'
       - '.github/workflows/build.yml'
 
 jobs:
@@ -18,20 +17,16 @@ jobs:
 
       - name: Extract project ZIP
         run: |
+          ZIP=$(ls -t ./*.zip | head -n 1)
+          echo "Using: $ZIP"
           mkdir source
-          unzip -q onix_ai.zip -d source
+          unzip -q "$ZIP" -d source
           PROJECT_DIR=$(find source -name pubspec.yaml -printf '%h\n' | head -n 1)
           if [ -z "$PROJECT_DIR" ]; then
             echo "pubspec.yaml not found"
             exit 1
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - name: Fix Gemini Model
-        run: |
-          grep -RIl 'gemini-2.5-flash' "$PROJECT_DIR/lib" | xargs -r sed -i 's/gemini-2.5-flash/gemini-3.8-flash/g'
-          echo "Checking Gemini model:"
-          grep -RIn 'gemini-' "$PROJECT_DIR/lib" || true
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -56,4 +51,3 @@ jobs:
         with:
           name: ONIX-AI-APK
           path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-debug.apk
-          
